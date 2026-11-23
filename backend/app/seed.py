@@ -74,7 +74,28 @@ CREATE TABLE IF NOT EXISTS 行程贯验 (
   是否通过 INTEGER NOT NULL,
   说明 TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS 到达序匣 (
+  事件编号 TEXT PRIMARY KEY,
+  卡号 TEXT NOT NULL,
+  站点键 TEXT NOT NULL,
+  方向 TEXT NOT NULL,
+  事件时 TEXT NOT NULL,
+  处理时 TEXT NOT NULL,
+  入匣处理时 TEXT NOT NULL,
+  匣态 TEXT NOT NULL DEFAULT '在匣',
+  冲洗时刻 TEXT NOT NULL DEFAULT '',
+  开腿结果 TEXT NOT NULL DEFAULT '',
+  行程键 TEXT NOT NULL DEFAULT '',
+  valid INTEGER NOT NULL DEFAULT 1,
+  批次编号 TEXT NOT NULL DEFAULT '',
+  序 INTEGER NOT NULL DEFAULT 0
+);
 """
+
+# 处理水位：已接纳（含已开腿/成对/旁路）事件的最大处理时；事件时晚于水位的刷卡先入到达序匣。
+水位键 = "处理水位"
+# 事件水位：已接纳事件的最大事件时，用于缺腿超时扫描（匣内未来事件不参与）。
+事件水位键 = "事件水位"
 
 
 def 此刻() -> str:
@@ -91,6 +112,7 @@ def 初始化库() -> None:
             "同站进出": "允许",
             "重复进站策略": "旧腿旁路并开新腿",
             "配对策略": "同卡先进后出",
+            "乱序缓冲口径": "以处理水位入匣为准：事件时>处理水位先入到达序匣，追上后按到达序冲洗，入匣期间禁止开腿/成对",
             "骨架": "刷卡点装载→同卡进站出站成对物化→缺腿异向超时旁路→行程账与刷卡点互证",
         }.items():
             conn.execute("INSERT INTO 站规(键, 值) VALUES (?, ?)", (k, v))

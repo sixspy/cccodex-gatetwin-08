@@ -102,6 +102,14 @@ def 列旁路():
         conn.close()
 
 
+@路由.get("/到达序匣")
+def 列到达序匣(匣态: str = ""):
+    """处理时乱序缓冲只读接口：事件编号、匣态、冲洗时刻、开腿结果、valid。"""
+    from app.modules import 处理时乱序缓冲 as 缓冲
+
+    return 缓冲.查匣(匣态)
+
+
 @路由.get("/批次")
 def 列批次():
     conn = 连接()
